@@ -1,0 +1,9 @@
+SELECT 
+    date_part('week', doe) AS week,
+    COUNT(CASE WHEN dor IS NULL THEN 1 END) AS borrowed,
+    COUNT(CASE WHEN dor IS NOT NULL THEN 1 END) AS returned,
+    COUNT(CASE WHEN dor > doe THEN 1 END) AS late
+FROM borrowing
+GROUP BY week
+ORDER BY week
+LIMIT 30;

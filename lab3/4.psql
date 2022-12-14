@@ -1,0 +1,16 @@
+-- 4.
+-- We want to see books that do and don’t have prequels as a true/false list, however we
+-- only care about the books borrowed in the month of February. The first column says
+-- the book title, the second column tells us whether this book has a prequel or not as
+-- true or false and the third column shows when the book was borrowed. This should be
+-- sorted by titles alphabetically.
+
+SELECT b.title,
+       p.bookid IS NOT NULL AS every,
+       bo.dob
+FROM books b
+JOIN resources r ON r.bookid = b.bookid
+JOIN borrowing bo ON r.physicalid = bo.physicalid
+LEFT JOIN prequels p ON p.bookid = b.bookid
+WHERE date_part('month', bo.dob) = 2
+ORDER BY b.title ASC;

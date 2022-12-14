@@ -1,0 +1,27 @@
+WITH RECURSIVE series AS (
+    SELECT 
+        books.title,
+        books.bookid,
+        prequels.prequelid
+    FROM
+        books
+    INNER JOIN prequels ON prequels.bookid = books.bookid
+    WHERE 
+        books.bookid = 8713
+    UNION
+        SELECT
+            b.title,
+            b.bookid,
+            p.prequelid
+        FROM
+            books b
+        LEFT JOIN prequels p ON p.bookid = b.bookid
+        INNER JOIN series s ON b.bookid = s.prequelid
+) SELECT
+    *
+FROM
+    series;
+
+
+
+

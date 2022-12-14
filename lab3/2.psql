@@ -1,0 +1,11 @@
+SELECT 
+    books.title,
+    RANK () OVER (
+        ORDER BY COUNT(borrowing.physicalid) DESC
+    ) FROM resources
+    INNER JOIN borrowing ON borrowing.physicalid = resources.physicalid
+    INNER JOIN books ON books.bookid = resources.bookid
+    INNER JOIN genre ON genre.bookid = books.bookid
+    WHERE genre.genre = 'RomCom'
+    GROUP BY books.title
+    LIMIT 5;
