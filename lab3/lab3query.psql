@@ -1,0 +1,119 @@
+/* 1. Display the title and combined genres for all books and sort the titles alphabetically */
+
+SELECT books.title, STRING_AGG (Genre.genre, ', ') AS genre
+FROM 
+    books 
+INNER JOIN Genre USING (bookID)
+GROUP BY 
+    books.title
+ORDER BY 
+    books.title;
+
+/* 2. Rank the top 5 of the all time most popular books in the ‘RomCom’ genre based on
+the amount of times they’ve been borrowed. */
+
+SELECT t.title, t.rank
+FROM 
+(SELECT books.title AS title, RANK () OVER (ORDER BY COUNT(books.title) DESC) AS rank 
+    FROM Genre
+    INNER JOIN Books USING (bookID)
+    INNER JOIN Resources USING (bookID)
+    INNER JOIN Borrowing USING (physicalID)
+    WHERE Genre.genre = 'RomCom'
+    GROUP BY books.title
+) AS t
+WHERE t.rank < 6
+GROUP BY t.title, t.rank
+ORDER BY t.rank
+
+/* 3. Present a weekly report from week 1 to 30 on how many books were borrowed,
+returned and late. */
+
+SELECT r.week, r.borrowed, b.returned, b.late  FROM
+
+    (SELECT date_part('week', DoB) AS week, COUNT(DoB) AS borrowed
+        FROM Borrowing
+        GROUP BY date_part('week', DoB)
+        ORDER BY date_part('week', DoB) ASC
+    ) AS r
+    JOIN
+    (SELECT date_part('week', DoR) AS week, COUNT(DoR) AS returned, 
+        COUNT(CASE WHEN DoE < DoR THEN 1 ELSE NULL END) AS late
+        FROM Borrowing
+        GROUP BY date_part('week', DoR)
+        ORDER BY date_part('week', DoR) ASC
+    ) AS b ON b.week = r.week
+WHERE r.week BETWEEN 1 AND 30; 
+
+/* 4. We want to see books that do and don’t have prequels as a true/false list, however we
+only care about the books borrowed in the month of February. The first column says
+the book title, the second column tells us whether this book has a prequel or not as
+true or false and the third column shows when the book was borrowed. This should be
+sorted by titles alphabetically. */ 
+
+SELECT books.title, 
+(CASE WHEN Prequels.bookID IS NOT NULL THEN True ELSE False END) AS every, borrowing.Dob
+FROM books
+LEFT JOIN Prequels ON Prequels.bookID = books.bookID
+INNER JOIN Resources ON resources.bookID = books.bookID
+INNER JOIN borrowing ON borrowing.physicalID = resources.physicalID
+WHERE borrowing.DoB BETWEEN '2021-02-01' AND '2021-02-28'
+ORDER BY title ASC; 
+
+/* 5. Use the recursive method to present a list of the titles of each book in the Harry Potter
+Series. */ 
+
+WITH RECURSIVE series AS (
+  SELECT
+    title,
+    bookID
+  FROM
+    books
+  WHERE
+    bookID = 8713
+  UNION ALL
+  SELECT
+    books.title,
+    Prequels.prequelID
+  FROM
+    books, Prequels
+  INNER JOIN series ON series.bookID = Prequels.bookID
+  WHERE books.bookID = Prequels.prequelID
+)
+SELECT
+  title, bookID,
+  (SELECT prequelID FROM Prequels WHERE bookID = series.bookID) AS prequelid
+FROM
+  series;
+
+/* P+ For each book series, use the recursive method 
+to present the name and sum of all pages of each book in all series in order. */
+
+WITH RECURSIVE series AS (
+  SELECT
+    CAST(title AS varchar(1000)),
+    pages,
+    bookID,
+    CAST(NULL AS INTEGER) AS prequelid
+  FROM
+    books
+  WHERE
+    bookID IN (SELECT prequelID FROM Prequels) AND NOT bookID IN (SELECT bookID FROM Prequels)
+  UNION ALL
+  SELECT
+    CAST(CONCAT(series.title, ' -> ', books.title) AS varchar(1000)),
+    series.pages+ books.pages,
+    Prequels.bookID,
+    Prequels.prequelID
+  FROM
+    books, Prequels
+  INNER JOIN series ON  series.bookID = Prequels.prequelID 
+  WHERE books.bookID = Prequels.bookID
+)
+SELECT 
+  title AS series, pages
+FROM
+  series
+WHERE NOT bookID IN (SELECT prequelid FROM prequels)
+GROUP BY title, pages
+ORDER BY title;

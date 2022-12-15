@@ -1,63 +1,29 @@
-WITH RECURSIVE all_books AS (
-    SELECT
-        books.bookid,
-        prequels.prequelid,
-        books.title,
-        books.pages
-    FROM books
-    LEFT JOIN prequels ON books.bookid = prequels.bookid
-), book_series AS (
-    SELECT 
-        all_books.bookid,
-        all_books.prequelid,
-        all_books.title::TEXT AS series, -- ::TEXT casts varchar to text
-        all_books.pages
-    FROM all_books
-    WHERE all_books.prequelid IS NULL
 
-    UNION ALL
-    SELECT
-        b.bookid,
-        b.prequelid,
-        CONCAT(book_series.series,  ' -> ',  b.title::TEXT),
-        book_series.pages + b.pages
-    FROM all_books b
-    JOIN book_series ON book_series.bookid = b.prequelid
+WITH RECURSIVE series AS (
+  SELECT
+    CAST(title AS varchar(1000)),
+    pages,
+    bookid,
+    CAST(NULL AS INTEGER) AS prequelid
+  FROM
+    books
+  WHERE
+    bookid IN (SELECT prequelid FROM prequels) AND NOT bookid IN (SELECT bookid FROM prequels)
+  UNION ALL
+  SELECT
+    CAST(CONCAT(series.title, ' -> ', books.title) AS varchar(1000)),
+    series.pages+ books.pages,
+    prequels.bookid,
+    prequels.prequelid
+  FROM
+    books, prequels
+  INNER JOIN series ON  series.bookid = prequels.prequelid 
+  WHERE books.bookid = prequels.bookid
 )
 SELECT 
-    series,
-    pages
-FROM book_series
-GROUP BY book_series.series, book_series.pages 
-HAVING NOT EXISTS (
-    SELECT 1 
-    FROM book_series x
-    WHERE x.series <> book_series.series -- <> checks for substrings
-    AND x.series LIKE CONCAT(book_series.series, '%')
-)
-ORDER BY series;
-
-
--- In the code you provided, the AND line is used to combine two conditions
- in the WHERE clause of the subquery. The WHERE clause is used to specify which rows should be returned by the subquery.
-
--- The two conditions in the WHERE clause are as follows:
-
--- x.series <> book_series.series: This condition checks
---  whether the series column of the book_series table in the inner query
---   (x.series) is not equal to the series column of the
---    outer query (book_series.series).
-
--- x.series LIKE CONCAT(book_series.series, '%'):
--- This condition uses the LIKE operator to check whether the series column
--- of the book_series table in the inner query (x.series) is a substring
--- of the series column of the outer query (book_series.series). The % wildcard
---  character is used to match any characters that come after the series
---  value from the outer query.
-
--- The AND operator is used to combine these two conditions, meaning that
---  a row will only be returned by the subquery if both conditions are true.
---   In other words, the subquery will only return rows where the series column
---    is not equal to the series value in the outer query, but is a substring of it.
-
--- In summary, the AND line in the code is used to combine two conditions in the WHERE clause of the subquery, ensuring that only rows that meet both conditions are returned.
+  title AS series, pages
+FROM
+  series
+WHERE NOT bookid IN (SELECT prequelid FROM prequels)
+GROUP BY title, pages
+ORDER BY title;
