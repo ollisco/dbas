@@ -1,23 +1,32 @@
+-- 3. Present a weekly report from week 1 to 30 on how many books were borrowed,
+-- returned and late.
+-- Note:
+-- - A week's late books are those books returned that week and which have dor > doe
+-- - PSQL counts weeks a little differently, the year starts at week 53.
+-- Tip: Use the PSQL function date_part
+
 SELECT 
-    r.week,
-    r.borrowed,
-    b.returned,
-    b.late
+    b.week,
+    b.borrowed,
+    r.returned,
+    r.late
 FROM (
     SELECT 
         date_part('week', dob) AS week, 
-        COUNT(dob) AS borrowed
+        COUNT(CASE WHEN dob IS NOT NULL THEN 1 END) AS borrowed
+        -- or COUNT(dob)
     FROM borrowing
     GROUP BY date_part('week', dob)
     ORDER BY date_part('week', dob) ASC
-) AS r
+) AS b
 JOIN (
     SELECT 
         date_part('week', dor) AS week, 
-        COUNT(dor) AS returned, 
-        COUNT(CASE WHEN DoE < dor THEN 1 END) AS late
+        COUNT(CASE WHEN dor IS NOT NULL THEN 1 END) AS returned, 
+        -- or COUNT(dor)
+        COUNT(CASE WHEN doe < dor THEN 1 END) AS late
     FROM Borrowing
     GROUP BY date_part('week', dor)
     ORDER BY date_part('week', dor) ASC
-) AS b ON b.week = r.week
-WHERE r.week BETWEEN 1 AND 30; 
+) AS r ON r.week = b.week
+WHERE b.week BETWEEN 1 AND 30; 

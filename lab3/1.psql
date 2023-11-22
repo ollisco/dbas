@@ -11,35 +11,3 @@ SELECT
 FROM books
     INNER JOIN genre ON genre.bookid = books.bookid
 GROUP BY books.title ORDER BY books.title;
-
--- This code is selecting the title and combined genres of all books and sorting
---  the titles alphabetically. It is doing this by using a few different SQL clauses 
---  and functions.
-
--- The SELECT clause is used to specify the columns that should be returned in the
---  final results. In this case, the code is selecting the title column from the books
---  table, as well as a new column called genre, which is generated using the 
---  STRING_AGG function. The STRING_AGG function concatenates the values in the 
---  genre column from the genre table, separated by a comma and a space.
-
--- The FROM clause is used to specify the tables that should be used in the query.
---  In this case, the code is using the books and genre tables.
-
--- The INNER JOIN clause is used to combine rows from the two tables based on a
---  common column. In this case, the INNER JOIN is combining rows from the genre
---  and books tables based on the bookid column, which is present in both tables.
---  This means that only rows that have matching values in the bookid column will 
---  be included in the final results.
-
--- The GROUP BY clause is used to group the rows of the results by the title column.
---  This is necessary because the STRING_AGG function is being used to concatenate the
---   values in the genre column, and the GROUP BY clause is used to specify which 
---   column(s) the values should be grouped by.
-
--- Finally, the ORDER BY clause is used to sort the results alphabetically by the
---  title column. This ensures that the final results are sorted in the desired order.
-
--- In summary, this code is selecting the title and combined genre values from the 
---  books and genre tables, grouping the results by the title column, and sorting the 
---  results alphabetically by the title column.
-

@@ -1,0 +1,88 @@
+-- LAB 4
+-- Add foreign key constraints to the DATABASe
+ALTER TABLE borrowing ADD CONSTRAINT fk_borrowing_physicalid FOREIGN KEY (physicalid) REFERENCES resources(physicalid);
+ALTER TABLE borrowing ADD CONSTRAINT fk_borrowing_userid FOREIGN KEY (userid) REFERENCES users(userid);
+
+-- and for authors
+ALTER TABLE author ADD CONSTRAINT fk_author_bookid FOREIGN KEY (bookid) REFERENCES books(bookid);
+
+-- and for admins
+ALTER TABLE admins ADD CONSTRAINT fk_admin_userid FOREIGN KEY (userid) REFERENCES users(userid);
+
+-- and for studens
+-- FAIL
+ALTER TABLE students ADD CONSTRAINT fk_students_userid FOREIGN KEY (userid) REFERENCES users(userid);
+
+-- and for editions
+-- FAIL
+ALTER TABLE edition ADD CONSTRAINT fk_edition_bookid FOREIGN KEY (bookid) REFERENCES books(bookid);
+
+-- and for fines --> borrowing id
+Alter table fines ADD CONSTRAINT fk_fine_borrowingid FOREIGN KEY (borrowingid) REFERENCES borrowing(borrowingid);
+
+-- and for genres
+ALTER TABLE genre ADD CONSTRAINT fk_genres_bookid FOREIGN KEY (bookid) REFERENCES books(bookid);
+
+-- and for language
+ALTER TABLE language ADD CONSTRAINT fk_language_bookid FOREIGN KEY (bookid) REFERENCES books(bookid);
+
+-- and for prequels
+ALTER TABLE prequels ADD CONSTRAINT fk_prequels_bookid FOREIGN KEY (bookid) REFERENCES books(bookid);
+ALTER TABLE prequels ADD CONSTRAINT fk_prequels_prequelid FOREIGN KEY (prequelid) REFERENCES books(bookid);
+ALTER TABLE prequels ADD CONSTRAINT unique_combination UNIQUE (bookid,prequelid);
+
+
+-- and for transactions
+ALTER TABLE transactions ADD CONSTRAINT fk_transactions_borrowingid FOREIGN KEY (borrowingid) REFERENCES borrowing(borrowingid);
+
+-- and for resources
+ALTER TABLE resources ADD CONSTRAINT fk_resources_bookid FOREIGN KEY (bookid) REFERENCES books(bookid);
+
+-- NOT NULL constraints
+ALTER TABLE admins ALTER COLUMN department SET NOT NULL;
+ALTER TABLE admins ALTER COLUMN phonenumber SET NOT NULL;
+
+ALTER TABLE author ALTER COLUMN bookid SET NOT NULL;
+
+ALTER TABLE books ALTER COLUMN title SET NOT NULL;
+ALTER TABLE books ALTER COLUMN pages SET NOT NULL;
+
+ALTER TABLE borrowing ALTER COLUMN physicalid SET NOT NULL;
+ALTER TABLE borrowing ALTER COLUMN userid SET NOT NULL;
+
+ALTER TABLE edition ALTER COLUMN isbn SET NOT NULL;
+
+ALTER TABLE fines ALTER COLUMN amount SET NOT NULL;
+
+ALTER TABLE resources ALTER COLUMN bookid SET NOT NULL;
+
+ALTER TABLE students ALTER COLUMN program SET NOT NULL;
+
+ALTER TABLE transactions ALTER COLUMN borrowingid SET NOT NULL;
+ALTER TABLE transactions ALTER COLUMN paymentmethod SET NOT NULL;
+
+-- FAIL
+ALTER TABLE transactions ALTER COLUMN dop SET NOT NULL;
+
+ALTER TABLE users ALTER COLUMN name SET NOT NULL;
+ALTER TABLE users ALTER COLUMN address SET NOT NULL;
+ALTER TABLE users ALTER COLUMN email SET NOT NULL;
+
+-- CHECK constraints
+-- a)
+-- FAIL
+ALTER TABLE fines ADD CONSTRAINT check_amount CHECK (amount > 0);
+-- FAIL
+ALTER TABLE books ADD CONSTRAINT check_pages CHECK (pages > 0);
+-- FAIL
+ALTER TABLE edition ADD CONSTRAINT check_edition CHECK (edition > 0);
+
+-- b)
+ALTER TABLE borrowing ADD CONSTRAINT check_borrowing CHECK (borrowingdate <= returndate);
+
+-- c)
+ALTER TABLE users ADD CONSTRAINT check_email CHECK (email LIKE '%@kth.se');
+
+-- PART 2
+
+-- CREATE DATABASE ollejer_bardv_lab4_mondial;

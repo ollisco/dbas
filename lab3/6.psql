@@ -8,11 +8,15 @@ WITH RECURSIVE series AS (
   FROM
     books
   WHERE
-    bookid IN (SELECT prequelid FROM prequels) AND NOT bookid IN (SELECT bookid FROM prequels)
+    bookid IN (
+      SELECT prequelid FROM prequels
+    ) AND NOT bookid IN (
+      SELECT bookid FROM prequels
+    )
   UNION ALL
   SELECT
     CAST(CONCAT(series.title, ' -> ', books.title) AS varchar(1000)),
-    series.pages+ books.pages,
+    series.pages + books.pages,
     prequels.bookid,
     prequels.prequelid
   FROM
@@ -20,10 +24,13 @@ WITH RECURSIVE series AS (
   INNER JOIN series ON  series.bookid = prequels.prequelid 
   WHERE books.bookid = prequels.bookid
 )
+
 SELECT 
-  title AS series, pages
+  title AS series,
+  pages
 FROM
   series
-WHERE NOT bookid IN (SELECT prequelid FROM prequels)
-GROUP BY title, pages
+  WHERE NOT bookid IN (SELECT prequelid FROM prequels) AND title LIKE '% -> %'
+GROUP BY title, pages, bookid, prequelid
 ORDER BY title;
+

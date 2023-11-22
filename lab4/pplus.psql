@@ -1,0 +1,69 @@
+-- Not optimized for performance
+WITH RECURSIVE paths AS (
+    SELECT 
+        code, 0 as len
+    FROM 
+        country
+    WHERE code = 'S'
+    UNION ALL
+    SELECT 
+        b.country1, len + 1 as len 
+    FROM (
+        SELECT country1, country2 FROM borders
+        UNION ALL
+        SELECT country2, country1 FROM borders
+    ) b
+    JOIN paths p1 ON b.country2 = p1.code AND len <= 4
+) SELECT c.code, c.name, MIN(len) as len FROM paths
+JOIN country c ON paths.code = c.code
+WHERE c.name != 'Sweden'
+GROUP BY c.code, c.name
+ORDER BY len ASC;
+
+
+WITH RECURSIVE riverpaths AS (
+    SELECT 
+        name,
+        name AS start,
+        CAST(name AS varchar) AS path,
+        1 AS numbrivers, 
+        length AS totlength
+    FROM
+        river
+    WHERE 
+        name = 'Amazonas' 
+        OR name = 'Mississippi'
+        OR name = 'Nile'
+        OR name = 'Jangtse'
+        OR name = 'Rhein'
+        OR name = 'Donau'
+    UNION ALL
+    SELECT 
+        r.name,
+        rp.start,
+        CONCAT(rp.path, '-', r.name) AS path,
+        numbrivers + 1 as numbrivers, 
+        totlength + r.length as totlength
+    FROM river r
+    INNER JOIN riverpaths rp ON r.river = rp.name
+) SELECT 
+    RANK () OVER (
+        ORDER BY numbrivers DESC
+    ) rank,
+    start,
+    path,  
+    numbrivers,
+    totlength
+FROM 
+    riverpaths
+GROUP by start, path, numbrivers, totlength
+HAVING numbrivers = ( 
+        SELECT MAX(rp2.numbrivers) from riverpaths rp2
+        GROUP BY rp2.start, rp2.numbrivers
+        HAVING rp2.start = start
+)
+ORDER BY 
+    rank ASC, totlength DESC;
+
+SELECT start, MAX(numbrivers) from riverpaths
+GROUP BY start;

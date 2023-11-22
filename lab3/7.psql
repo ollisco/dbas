@@ -1,0 +1,29 @@
+
+WITH RECURSIVE series AS (
+SELECT
+CAST(title AS varchar(1000)) AS title,
+pages,
+bookid,
+CAST(NULL AS INTEGER) AS prequelid
+FROM
+books
+WHERE
+bookid IN (SELECT prequelid FROM prequels) AND NOT bookid IN (SELECT bookid FROM prequels)
+UNION ALL
+SELECT
+CAST(CONCAT(series.title, ' -> ', books.title) AS varchar(1000)) AS title,
+series.pages+ books.pages AS pages,
+prequels.bookid AS bookid,
+prequels.prequelid AS prequelid
+FROM
+books, prequels
+INNER JOIN series ON series.bookid = prequels.prequelid
+WHERE books.bookid = prequels.bookid
+)
+SELECT
+title AS series, pages
+FROM
+series
+WHERE NOT bookid IN (SELECT prequelid FROM prequels) AND bookid IN (SELECT MIN(bookid) FROM series GROUP BY title)
+GROUP BY title, pages
+ORDER BY title;

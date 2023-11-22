@@ -1,0 +1,64 @@
+WITH borders AS (
+    SELECT c.name FROM country c
+    JOIN borders b ON c.code = b.country1
+    UNION ALL
+    SELECT c.name FROM country c
+    JOIN borders b ON c.code = b.country2
+) SELECT name, COUNT(name) as num
+FROM borders 
+GROUP BY name 
+HAVING COUNT(name) = ( -- BASICALLY MIN(COUNT(name))
+    SELECT COUNT(name) FROM borders
+    GROUP BY name
+    ORDER BY COUNT(name)
+    ASC LIMIT 1
+)
+ORDER BY COUNT(name)
+ASC;
+
+
+WITH borders AS (
+    SELECT country1 as name FROM borders
+    UNION ALL
+    SELECT country2 as name FROM borders
+) SELECT c.name, COUNT(*) as num
+FROM borders 
+JOIN country c ON borders.name = c.code
+GROUP BY c.name 
+ORDER BY COUNT(*)
+ASC;
+-- 
+
+WITH languages AS (
+    SELECT c.name, (s.percentage * c.population) / 100 AS numberspeaker, s.language
+    FROM spoken s
+    JOIN country c ON s.country = c.code
+) 
+SELECT 
+    language, 
+    ROUND(SUM (numberspeaker)) as numberspeaker 
+FROM 
+    languages
+GROUP BY language
+HAVING SUM (numberspeaker) IS NOT NULL AND language IS NOT NULL
+ORDER BY numberspeaker DESC;
+
+
+WITH borders AS (
+    -- c1 - c2 - e1 - e2 # JOIN DATA
+    SELECT b.country1, e1.gdp as gdp1, b.country2, e2.gdp as gdp2 FROM borders b -- c1 e1 c2 e2
+    JOIN economy e1 ON b.country1 = e1.country
+    JOIN economy e2 ON b.country2 = e2.country
+    UNION ALL
+    SELECT b.country2, e2.gdp, b.country1, e1.gdp FROM borders b -- c2 e2 c1 e1
+    JOIN economy e1 ON b.country1 = e1.country
+    JOIN economy e2 ON b.country2 = e2.country
+) SELECT 
+    country1, gdp1, country2, gdp2, ROUND((gdp1 / gdp2)) AS ratio
+FROM borders
+WHERE ROUND((gdp1 / gdp2)) IS NOT NULL
+ORDER BY ratio DESC;
+
+
+
+

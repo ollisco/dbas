@@ -1,0 +1,45 @@
+WITH RECURSIVE riverpaths AS (
+    SELECT 
+        name,
+        name AS start,
+        CAST(name AS varchar) AS path,
+        1 AS numbrivers, 
+        length AS totlength
+    FROM
+        river
+    WHERE 
+        name = 'Amazonas' 
+        OR name = 'Mississippi'
+        OR name = 'Nile'
+        OR name = 'Jangtse'
+        OR name = 'Rhein'
+        OR name = 'Donau'
+    UNION ALL
+    SELECT 
+        r.name,
+        rp.start,
+        CONCAT(rp.path, '-', r.name) AS path,
+        numbrivers + 1 as numbrivers, 
+        totlength + r.length as totlength
+    FROM river r
+    INNER JOIN riverpaths rp ON r.river = rp.name
+) SELECT 
+    RANK () OVER (
+        ORDER BY numbrivers DESC
+    ) rank,
+    start,
+    path,  
+    numbrivers,
+    totlength
+FROM 
+    riverpaths
+GROUP by start, path, numbrivers, totlength
+HAVING numbrivers = (
+    SELECT MAX(m.maxx) FROM (
+        SELECT rp2.start, MAX(rp2.numbrivers) AS maxx from riverpaths rp2
+        GROUP BY rp2.start
+    ) AS m
+    WHERE m.start = riverpaths.start AND numbrivers = m.maxx 
+    GROUP BY m.maxx
+)
+ORDER BY rank ASC, totlength DESC;
